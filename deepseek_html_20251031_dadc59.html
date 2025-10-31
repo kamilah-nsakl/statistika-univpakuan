@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stanivkan - Statistika Universitas Pakuan</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.5/jstat.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            color: #2a5298;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .input-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        .input-group input:focus {
+            border-color: #2a5298;
+            outline: none;
+        }
+        
+        button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #1e3c72;
+        }
+        
+        .data-display {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        table th, table td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .result-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .result-item {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .result-value {
+            font-weight: 600;
+            color: #2a5298;
+        }
+        
+        .chart-container {
+            margin-top: 30px;
+            height: 300px;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            font-weight: 600;
+        }
+        
+        .tab.active {
+            background: #2a5298;
+            color: white;
+            border-color: #2a5298;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .input-section {
+                flex-direction: column;
+            }
+            
+            .input-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Stanivkan</h1>
+            <p>Statistika Universitas Pakuan - Aplikasi Analisis Statistik</p>
+        </header>
+        
+        <div class="card">
+            <h2>Input Data</h2>
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="dataX">Data Variabel X (dipisah koma)</label>
+                    <input type="text" id="dataX" placeholder="Contoh: 1, 2, 3, 4, 5">
+                </div>
+                <div class="input-group">
+                    <label for="dataY">Data Variabel Y (dipisah koma)</label>
+                    <input type="text" id="dataY" placeholder="Contoh: 2, 4, 5, 4, 5">
+                </div>
+            </div>
+            <button id="calculateBtn">Hitung Analisis</button>
+            
+            <div class="data-display">
+                <h3>Data yang Dimasukkan</h3>
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>X</th>
+                            <th>Y</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <!-- Data akan diisi oleh JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="regression">Analisis Regresi</div>
+                <div class="tab" data-tab="validation">Validasi Model</div>
+                <div class="tab" data-tab="normality">Uji Normalitas</div>
+            </div>
+            
+            <div class="tab-content active" id="regression">
+                <div class="card">
+                    <h2>Analisis Regresi Linear</h2>
+                    <div class="result-section" id="regressionResults">
+                        <!-- Hasil regresi akan ditampilkan di sini -->
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="regressionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="validation">
+                <div class="card">
+                    <h2>Validasi Model Regresi</h2>
+                    <div class="result-section" id="validationResults">
+                        <!-- Hasil validasi akan ditampilkan di sini -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="normality">
+                <div class="card">
+                    <h2>Uji Normalitas Residual</h2>
+                    <div class="result-section" id="normalityResults">
+                        <!-- Hasil uji normalitas akan ditampilkan di sini -->
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="normalityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Stanivkan - Statistika Universitas Pakuan &copy; 2023</p>
+            <p>Aplikasi sederhana untuk analisis statistik: regresi, validasi, dan uji normalitas</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calculateBtn = document.getElementById('calculateBtn');
+            const dataXInput = document.getElementById('dataX');
+            const dataYInput = document.getElementById('dataY');
+            const dataTableBody = document.getElementById('dataTableBody');
+            const regressionResults = document.getElementById('regressionResults');
+            const validationResults = document.getElementById('validationResults');
+            const normalityResults = document.getElementById('normalityResults');
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            let regressionChart = null;
+            let normalityChart = null;
+            
+            // Fungsi untuk mengubah tab
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Hapus kelas active dari semua tab dan konten
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Tambahkan kelas active ke tab dan konten yang dipilih
+                    tab.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Fungsi untuk memproses data input
+            function processData() {
+                const xData = dataXInput.value.split(',').map(val => parseFloat(val.trim()));
+                const yData = dataYInput.value.split(',').map(val => parseFloat(val.trim()));
+                
+                // Validasi input
+                if (xData.length !== yData.length || xData.length < 2) {
+                    alert('Data X dan Y harus memiliki jumlah yang sama (minimal 2 data) dan berupa angka.');
+                    return null;
+                }
+                
+                if (xData.some(isNaN) || yData.some(isNaN)) {
+                    alert('Pastikan semua data adalah angka yang valid.');
+                    return null;
+                }
+                
+                return { x: xData, y: yData };
+            }
+            
+            // Fungsi untuk menampilkan data dalam tabel
+            function displayDataTable(data) {
+                dataTableBody.innerHTML = '';
+                
+                data.x.forEach((xVal, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${xVal}</td>
+                        <td>${data.y[index]}</td>
+                    `;
+                    dataTableBody.appendChild(row);
+                });
+            }
+            
+            // Fungsi untuk menghitung regresi linear
+            function calculateRegression(data) {
+                const n = data.x.length;
+                
+                // Hitung rata-rata
+                const meanX = data.x.reduce((sum, val) => sum + val, 0) / n;
+                const meanY = data.y.reduce((sum, val) => sum + val, 0) / n;
+                
+                // Hitung jumlah kuadrat
+                const ssX = data.x.reduce((sum, val) => sum + Math.pow(val - meanX, 2), 0);
+                const ssY = data.y.reduce((sum, val) => sum + Math.pow(val - meanY, 2), 0);
+                const ssXY = data.x.reduce((sum, val, i) => sum + (val - meanX) * (data.y[i] - meanY), 0);
+                
+                // Hitung koefisien regresi
+                const slope = ssXY / ssX;
+                const intercept = meanY - slope * meanX;
+                
+                // Hitung nilai prediksi
+                const predictedY = data.x.map(x => slope * x + intercept);
+                
+                // Hitung residual
+                const residuals = data.y.map((y, i) => y - predictedY[i]);
+                
+                return {
+                    slope,
+                    intercept,
+                    meanX,
+                    meanY,
+                    predictedY,
+                    residuals,
+                    ssX,
+                    ssY,
+                    ssXY,
+                    n
+                };
+            }
+            
+            // Fungsi untuk menampilkan hasil regresi
+            function displayRegressionResults(data, results) {
+                regressionResults.innerHTML = `
+                    <div class="result-item">
+                        <span class="result-label">Persamaan Regresi:</span>
+                        <span class="result-value">Y = ${results.intercept.toFixed(4)} + ${results.slope.toFixed(4)}X</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Koefisien Regresi (b):</span>
+                        <span class="result-value">${results.slope.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Konstanta (a):</span>
+                        <span class="result-value">${results.intercept.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Rata-rata X:</span>
+                        <span class="result-value">${results.meanX.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Rata-rata Y:</span>
+                        <span class="result-value">${results.meanY.toFixed(4)}</span>
+                    </div>
+                `;
+                
+                // Buat grafik regresi
+                createRegressionChart(data, results);
+            }
+            
+            // Fungsi untuk membuat grafik regresi
+            function createRegressionChart(data, results) {
+                const ctx = document.getElementById('regressionChart').getContext('2d');
+                
+                if (regressionChart) {
+                    regressionChart.destroy();
+                }
+                
+                regressionChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'Data Aktual',
+                                data: data.x.map((x, i) => ({x: x, y: data.y[i]})),
+                                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                pointRadius: 6
+                            },
+                            {
+                                label: 'Garis Regresi',
+                                data: data.x.map(x => ({x: x, y: results.slope * x + results.intercept})),
+                                type: 'line',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Variabel X'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Variabel Y'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Fungsi untuk menghitung validasi model
+            function calculateValidation(data, results) {
+                const n = data.x.length;
+                const predictedY = results.predictedY;
+                const residuals = results.residuals;
+                
+                // Hitung R-squared
+                const ssRes = residuals.reduce((sum, res) => sum + Math.pow(res, 2), 0);
+                const ssTot = data.y.reduce((sum, val) => sum + Math.pow(val - results.meanY, 2), 0);
+                const rSquared = 1 - (ssRes / ssTot);
+                
+                // Hitung standard error
+                const se = Math.sqrt(ssRes / (n - 2));
+                
+                // Hitung Mean Absolute Error (MAE)
+                const mae = residuals.reduce((sum, res) => sum + Math.abs(res), 0) / n;
+                
+                // Hitung Mean Squared Error (MSE)
+                const mse = ssRes / n;
+                
+                return {
+                    rSquared,
+                    se,
+                    mae,
+                    mse
+                };
+            }
+            
+            // Fungsi untuk menampilkan hasil validasi
+            function displayValidationResults(validation) {
+                validationResults.innerHTML = `
+                    <div class="result-item">
+                        <span class="result-label">Koefisien Determinasi (R²):</span>
+                        <span class="result-value">${validation.rSquared.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Standard Error:</span>
+                        <span class="result-value">${validation.se.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Mean Absolute Error (MAE):</span>
+                        <span class="result-value">${validation.mae.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Mean Squared Error (MSE):</span>
+                        <span class="result-value">${validation.mse.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Interpretasi R²:</span>
+                        <span class="result-value">${interpretRSquared(validation.rSquared)}</span>
+                    </div>
+                `;
+            }
+            
+            // Fungsi untuk interpretasi R-squared
+            function interpretRSquared(rSquared) {
+                if (rSquared >= 0.9) return "Sangat Baik";
+                if (rSquared >= 0.7) return "Baik";
+                if (rSquared >= 0.5) return "Cukup";
+                return "Lemah";
+            }
+            
+            // Fungsi untuk uji normalitas (Shapiro-Wilk sederhana)
+            function calculateNormality(residuals) {
+                // Untuk penyederhanaan, kita akan menggunakan pendekatan visual dan statistik deskriptif
+                const n = residuals.length;
+                
+                // Hitung statistik deskriptif residual
+                const meanResidual = residuals.reduce((sum, res) => sum + res, 0) / n;
+                const sortedResiduals = [...residuals].sort((a, b) => a - b);
+                
+                // Hitung skewness dan kurtosis
+                const skewness = calculateSkewness(residuals, meanResidual);
+                const kurtosis = calculateKurtosis(residuals, meanResidual);
+                
+                // Buat Q-Q plot data (untuk visual)
+                const theoreticalQuantiles = generateTheoreticalQuantiles(n);
+                
+                return {
+                    meanResidual,
+                    skewness,
+                    kurtosis,
+                    sortedResiduals,
+                    theoreticalQuantiles
+                };
+            }
+            
+            // Fungsi untuk menghitung skewness
+            function calculateSkewness(data, mean) {
+                const n = data.length;
+                const numerator = data.reduce((sum, val) => sum + Math.pow(val - mean, 3), 0) / n;
+                const denominator = Math.pow(data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n, 1.5);
+                return numerator / denominator;
+            }
+            
+            // Fungsi untuk menghitung kurtosis
+            function calculateKurtosis(data, mean) {
+                const n = data.length;
+                const numerator = data.reduce((sum, val) => sum + Math.pow(val - mean, 4), 0) / n;
+                const denominator = Math.pow(data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / n, 2);
+                return numerator / denominator - 3; // Excess kurtosis
+            }
+            
+            // Fungsi untuk menghasilkan quantile teoritis untuk Q-Q plot
+            function generateTheoreticalQuantiles(n) {
+                const quantiles = [];
+                for (let i = 1; i <= n; i++) {
+                    const p = (i - 0.5) / n;
+                    quantiles.push(jStat.normal.inv(p, 0, 1));
+                }
+                return quantiles;
+            }
+            
+            // Fungsi untuk menampilkan hasil uji normalitas
+            function displayNormalityResults(normality, residuals) {
+                normalityResults.innerHTML = `
+                    <div class="result-item">
+                        <span class="result-label">Rata-rata Residual:</span>
+                        <span class="result-value">${normality.meanResidual.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Skewness:</span>
+                        <span class="result-value">${normality.skewness.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Kurtosis:</span>
+                        <span class="result-value">${normality.kurtosis.toFixed(4)}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Interpretasi Normalitas:</span>
+                        <span class="result-value">${interpretNormality(normality.skewness, normality.kurtosis)}</span>
+                    </div>
+                `;
+                
+                // Buat Q-Q plot
+                createQQPlot(normality.sortedResiduals, normality.theoreticalQuantiles);
+            }
+            
+            // Fungsi untuk interpretasi normalitas
+            function interpretNormality(skewness, kurtosis) {
+                const absSkewness = Math.abs(skewness);
+                const absKurtosis = Math.abs(kurtosis);
+                
+                if (absSkewness < 0.5 && absKurtosis < 0.5) {
+                    return "Residual mendekati distribusi normal";
+                } else if (absSkewness < 1 && absKurtosis < 1) {
+                    return "Residual agak menyimpang dari normal";
+                } else {
+                    return "Residual menyimpang dari distribusi normal";
+                }
+            }
+            
+            // Fungsi untuk membuat Q-Q plot
+            function createQQPlot(sortedResiduals, theoreticalQuantiles) {
+                const ctx = document.getElementById('normalityChart').getContext('2d');
+                
+                if (normalityChart) {
+                    normalityChart.destroy();
+                }
+                
+                // Standarisasi residual
+                const meanResidual = sortedResiduals.reduce((sum, val) => sum + val, 0) / sortedResiduals.length;
+                const stdResidual = Math.sqrt(sortedResiduals.reduce((sum, val) => sum + Math.pow(val - meanResidual, 2), 0) / sortedResiduals.length);
+                const standardizedResiduals = sortedResiduals.map(res => (res - meanResidual) / stdResidual);
+                
+                normalityChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Q-Q Plot Residual',
+                            data: theoreticalQuantiles.map((q, i) => ({x: q, y: standardizedResiduals[i]})),
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Quantile Teoritis'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Quantile Residual'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Event listener untuk tombol hitung
+            calculateBtn.addEventListener('click', function() {
+                const data = processData();
+                if (!data) return;
+                
+                // Tampilkan data dalam tabel
+                displayDataTable(data);
+                
+                // Hitung regresi
+                const regressionResults = calculateRegression(data);
+                
+                // Tampilkan hasil regresi
+                displayRegressionResults(data, regressionResults);
+                
+                // Hitung validasi
+                const validationResults = calculateValidation(data, regressionResults);
+                
+                // Tampilkan hasil validasi
+                displayValidationResults(validationResults);
+                
+                // Hitung normalitas
+                const normalityResults = calculateNormality(regressionResults.residuals);
+                
+                // Tampilkan hasil normalitas
+                displayNormalityResults(normalityResults, regressionResults.residuals);
+            });
+            
+            // Contoh data default
+            dataXInput.value = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10";
+            dataYInput.value = "2, 4, 5, 4, 5, 7, 8, 9, 10, 11";
+            
+            // Hitung otomatis dengan data contoh
+            calculateBtn.click();
+        });
+    </script>
+</body>
+</html>
